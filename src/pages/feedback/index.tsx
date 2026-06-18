@@ -6,13 +6,12 @@ import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { getSceneById } from '@/data/scenes'
 import { getUserStateById } from '@/data/states'
 import FeedbackQuestion from '@/components/FeedbackQuestion'
-import { SleepRecord } from '@/types'
 import styles from './index.module.scss'
 
 const FeedbackPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false)
-  const [pendingRecord, setPendingRecord] = useState<SleepRecord | null>(null)
   const {
+    pendingRecord,
     currentFeedback,
     isSubmitting,
     initFeedbackFromRecord,
@@ -21,38 +20,30 @@ const FeedbackPage: React.FC = () => {
     setSoundHarsh,
     submitFeedback,
     resetCurrentFeedback,
-    checkPendingFeedback,
-    getPendingRecord
+    checkPendingFeedback
   } = useFeedbackStore()
 
   const { feedbackCount } = usePreferenceStore()
 
-  const [pendingRecord, setPendingRecord] = useState<SleepRecord | null>(() => {
-    checkPendingFeedback()
-    return getPendingRecord()
-  })
-
   useDidShow(() => {
     checkPendingFeedback()
-    const record = getPendingRecord()
-    setPendingRecord(record)
-    if (record && !currentFeedback) {
-      initFeedbackFromRecord(record)
-    }
   })
 
   useEffect(() => {
     checkPendingFeedback()
-    const record = getPendingRecord()
-    setPendingRecord(record)
-    if (record) {
-      initFeedbackFromRecord(record)
-    }
+  }, [checkPendingFeedback])
 
+  useEffect(() => {
+    if (pendingRecord && !currentFeedback && !showSuccess) {
+      initFeedbackFromRecord(pendingRecord)
+    }
+  }, [pendingRecord, currentFeedback, initFeedbackFromRecord, showSuccess])
+
+  useEffect(() => {
     return () => {
       resetCurrentFeedback()
     }
-  }, [checkPendingFeedback, getPendingRecord, initFeedbackFromRecord, resetCurrentFeedback])
+  }, [resetCurrentFeedback])
 
   const questionConfigs = useMemo(() => [
     {
@@ -99,10 +90,12 @@ const FeedbackPage: React.FC = () => {
   }, [setFasterAsleep, setWokeUp, setSoundHarsh])
 
   const isComplete = useMemo(() => {
-    return currentFeedback &&
+    return !!(
+      currentFeedback &&
       currentFeedback.fasterAsleep &&
       currentFeedback.wokeUp &&
       currentFeedback.soundHarsh
+    )
   }, [currentFeedback])
 
   const answeredCount = useMemo(() => {
@@ -120,7 +113,6 @@ const FeedbackPage: React.FC = () => {
     const success = await submitFeedback()
     if (success) {
       setShowSuccess(true)
-      setPendingRecord(null)
       console.log('[FeedbackPage] 反馈提交成功')
     } else {
       Taro.showToast({
@@ -132,7 +124,9 @@ const FeedbackPage: React.FC = () => {
 
   const handleSuccessClose = useCallback(() => {
     setShowSuccess(false)
-    Taro.navigateBack()
+    Taro.switchTab({
+      url: '/pages/home/index'
+    })
   }, [])
 
   const handleBackHome = useCallback(() => {
@@ -146,12 +140,13 @@ const FeedbackPage: React.FC = () => {
 
   const getSelectedValue = (key: string): string | null => {
     if (!currentFeedback) return null
-    return (currentFeedback as Record<string, unknown>)[key] as string | null || null
+    const val = (currentFeedback as Record<string, unknown>)[key]
+    return (val as string) || null
   }
 
-  const noPendingRecord = !pendingRecord && !showSuccess
+  const showEmptyState = !pendingRecord && !showSuccess
 
-  if (noPendingRecord) {
+  if (showEmptyState) {
     return (
       <ScrollView className={styles.feedbackPage} scrollY>
         <View className={styles.emptyState}>

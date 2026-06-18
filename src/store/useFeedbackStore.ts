@@ -55,11 +55,9 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
     const feedbackedRecordIds = new Set(feedbacks.map(f => f.recordId))
 
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-    const today = dayjs().format('YYYY-MM-DD')
 
     const pending = records
-      .filter(r => r.date !== today)
-      .filter(r => r.date <= yesterday)
+      .filter(r => r.date === yesterday)
       .filter(r => !feedbackedRecordIds.has(r.id) && !r.feedbackId)
       .sort((a, b) => b.startTime - a.startTime)
 
@@ -67,7 +65,8 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
     const pendingRecord = pending[0] || null
     set({ hasPendingFeedback: hasPending, pendingRecord })
 
-    console.log('[FeedbackStore] checkPendingFeedback', {
+    console.log('[FeedbackStore] checkPendingFeedback 严格匹配昨晚记录', {
+      yesterday,
       hasPending,
       pendingRecordId: pendingRecord?.id
     })
