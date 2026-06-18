@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { usePlayerStore } from '@/store/usePlayerStore'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
@@ -14,10 +14,12 @@ const HomePage: React.FC = () => {
   const { setScene } = usePlayerStore()
   const { loadPreference, recommendedSceneId, getSleepRecords, getAverageSleepDuration, feedbackCount } = usePreferenceStore()
   const { hasPendingFeedback, checkPendingFeedback } = useFeedbackStore()
+  const [, forceUpdate] = useState(0)
 
-  useEffect(() => {
+  const refreshAll = useCallback(() => {
     loadPreference()
     checkPendingFeedback()
+    forceUpdate(n => n + 1)
 
     const hour = dayjs().hour()
     if (hour >= 5 && hour < 12) {
@@ -28,6 +30,14 @@ const HomePage: React.FC = () => {
       setGreeting('晚上好')
     }
   }, [loadPreference, checkPendingFeedback])
+
+  useDidShow(() => {
+    refreshAll()
+  })
+
+  React.useEffect(() => {
+    refreshAll()
+  }, [refreshAll])
 
   const handleSceneClick = useCallback((sceneId: string) => {
     setScene(sceneId)

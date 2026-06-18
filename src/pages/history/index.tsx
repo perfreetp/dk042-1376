@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { SleepRecord, SleepFeedback } from '@/types'
 import dayjs from 'dayjs'
@@ -10,15 +11,26 @@ const HistoryPage: React.FC = () => {
   const [records, setRecords] = useState<SleepRecord[]>([])
   const [feedbacks, setFeedbacks] = useState<SleepFeedback[]>([])
 
-  useEffect(() => {
+  const refreshData = useCallback(() => {
     setRecords(getSleepRecords())
     setFeedbacks(getSleepFeedbacks())
   }, [getSleepRecords, getSleepFeedbacks])
 
-  const avgDuration = useMemo(() => getAverageSleepDuration(), [getAverageSleepDuration])
+  useEffect(() => {
+    refreshData()
+  }, [refreshData])
 
-  const getFeedbackForRecord = useCallback((recordId: string, recordDate: string) => {
-    return feedbacks.find(f => f.date === recordDate)
+  useDidShow(() => {
+    refreshData()
+  })
+
+  const avgDuration = useMemo(() => getAverageSleepDuration(), [getAverageSleepDuration, records])
+
+  const getFeedbackForRecord = useCallback((record: SleepRecord): SleepFeedback | undefined => {
+    if (record.feedbackId) {
+      return feedbacks.find(f => f.id === record.feedbackId)
+    }
+    return feedbacks.find(f => f.recordId === record.id)
   }, [feedbacks])
 
   const getFeedbackLabels = useCallback((feedback: SleepFeedback | undefined) => {
@@ -101,7 +113,7 @@ const HistoryPage: React.FC = () => {
             <View key={dateLabel} className={styles.dateGroup}>
               <Text className={styles.dateHeader}>{dateLabel}</Text>
               {dateRecords.map(record => {
-                const feedback = getFeedbackForRecord(record.id, record.date)
+                const feedback = getFeedbackForRecord(record)
                 const feedbackLabels = getFeedbackLabels(feedback)
 
                 return (

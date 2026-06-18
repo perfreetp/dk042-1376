@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
 import { getSceneById } from '@/data/scenes'
@@ -15,11 +15,23 @@ const MinePage: React.FC = () => {
     getAverageSleepDuration,
     getMostUsedScene
   } = usePreferenceStore()
-  const { hasPendingFeedback } = useFeedbackStore()
+  const { hasPendingFeedback, checkPendingFeedback } = useFeedbackStore()
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  useEffect(() => {
+  useDidShow(() => {
     loadPreference()
+    checkPendingFeedback()
+    setRefreshKey(k => k + 1)
+  })
+
+  React.useEffect(() => {
+    loadPreference()
+    setRefreshKey(k => k + 1)
   }, [loadPreference])
+
+  const records = useMemo(() => getSleepRecords(), [getSleepRecords, refreshKey])
+  const avgDuration = useMemo(() => getAverageSleepDuration(), [getAverageSleepDuration, refreshKey])
+  const mostUsedSceneId = useMemo(() => getMostUsedScene(), [getMostUsedScene, refreshKey])
 
   const handleHistoryClick = useCallback(() => {
     Taro.navigateTo({
@@ -40,9 +52,6 @@ const MinePage: React.FC = () => {
     })
   }, [])
 
-  const records = getSleepRecords()
-  const avgDuration = getAverageSleepDuration()
-  const mostUsedSceneId = getMostUsedScene()
   const mostUsedScene = mostUsedSceneId ? getSceneById(mostUsedSceneId) : null
   const recommendedScene = recommendedSceneId ? getSceneById(recommendedSceneId) : null
   const progressPercent = Math.min(100, (feedbackCount % 3) / 3 * 100)

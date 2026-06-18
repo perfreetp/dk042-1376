@@ -4,6 +4,8 @@ import { getSceneById } from '@/data/scenes'
 import { getUserStateById, calculateAdjustedMix } from '@/data/states'
 import dayjs from 'dayjs'
 
+const FADE_DURATION_SECONDS = 10 * 60
+
 interface PlayerState extends PlaybackSettings {
   remainingTime: number
   elapsedTime: number
@@ -13,10 +15,9 @@ interface PlayerState extends PlaybackSettings {
   setMix: (mix: Partial<AudioMix>) => void
   startPlayback: () => void
   pausePlayback: () => void
+  resumePlayback: () => void
   stopPlayback: () => void
   updateElapsedTime: () => void
-  startFade: () => void
-  updateFadeVolume: () => void
   reset: () => void
 }
 
@@ -34,7 +35,6 @@ const initialState: PlaybackSettings = {
   endTime: null,
   isPlaying: false,
   isFading: false,
-  fadeStartTime: null,
   currentVolume: 1
 }
 
@@ -53,9 +53,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
     set({
       sceneId,
-      mix: adjustedMix
+      mix: adjustedMix,
+      startTime: null,
+      endTime: null,
+      elapsedTime: 0,
+      remainingTime: get().duration * 60,
+      isPlaying: false,
+      isFading: false,
+      currentVolume: 1
     })
-    console.log('[PlayerStore] setScene', { sceneId, adjustedMix })
+    console.log('[PlayerStore] setScene 重置为新会话', { sceneId, adjustedMix })
   },
 
   setUserState: (userStateId: string) => {
@@ -99,15 +106,37 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       elapsedTime: 0,
       remainingTime: get().duration * 60,
       currentVolume: 1,
-      isFading: false,
-      fadeStartTime: null
+      isFading: false
     })
-    console.log('[PlayerStore] startPlayback', { startTime: now, endTime })
+    console.log('[PlayerStore] startPlayback 全新开始', { startTime: now, endTime })
   },
 
   pausePlayback: () => {
     set({ isPlaying: false })
-    console.log('[PlayerStore] pausePlayback')
+    console.log('[PlayerStore] pausePlayback 保留当前进度', {
+      elapsedTime: get().elapsedTime,
+      remainingTime: get().remainingTime
+    })
+  },
+
+  resumePlayback: () => {
+    const state = get()
+    if (state.isPlaying) return
+    if (state.elapsedTime >= state.duration * 60) return
+
+    const now = Date.now()
+    const newStartTime = now - state.elapsedTime * 1000
+    const newEndTime = newStartTime + state.duration * 60 * 1000
+    set({
+      isPlaying: true,
+      startTime: newStartTime,
+      endTime: newEndTime
+    })
+    console.log('[PlayerStore] resumePlayback 继续播放', {
+      newStartTime,
+      newEndTime,
+      continueFrom: state.elapsedTime
+    })
   },
 
   stopPlayback: () => {
@@ -124,11 +153,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         userStateName: userState?.name || '',
         duration: state.duration,
         startTime: state.startTime,
-        endTime: state.endTime
+        endTime: Date.now()
       }
       const existingRecords = JSON.parse(localStorage.getItem('sleepRecords') || '[]')
       localStorage.setItem('sleepRecords', JSON.stringify([sleepRecord, ...existingRecords].slice(0, 30)))
-      console.log('[PlayerStore] stopPlayback - saved record', sleepRecord)
+      console.log('[PlayerStore] stopPlayback 已保存记录', sleepRecord)
     }
 
     set({
@@ -138,8 +167,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       elapsedTime: 0,
       remainingTime: get().duration * 60,
       currentVolume: 1,
-      isFading: false,
-      fadeStartTime: null
+      isFading: false
     })
   },
 
@@ -152,8 +180,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const totalSeconds = state.duration * 60
     const remaining = Math.max(0, totalSeconds - elapsed)
 
-    if (remaining <= 600 && !state.isFading) {
-      get().startFade()
+    const fadeStartThreshold = Math.max(0, totalSeconds - FADE_DURATION_SECONDS)
+    const shouldFade = totalSeconds > FADE_DURATION_SECONDS && elapsed >= fadeStartThreshold
+
+    let volume = 1
+    if (shouldFade) {
+      const fadeElapsed = elapsed - fadeStartThreshold
+      const fadeProgress = Math.min(1, fadeElapsed / FADE_DURATION_SECONDS)
+      volume = Math.max(0, 1 - fadeProgress)
     }
 
     if (remaining <= 0) {
@@ -161,34 +195,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return
     }
 
-    if (state.isFading) {
-      get().updateFadeVolume()
-    }
-
     set({
       elapsedTime: elapsed,
-      remainingTime: remaining
+      remainingTime: remaining,
+      isFading: shouldFade,
+      currentVolume: volume
     })
-  },
-
-  startFade: () => {
-    set({
-      isFading: true,
-      fadeStartTime: Date.now()
-    })
-    console.log('[PlayerStore] startFade - 开始最后10分钟渐弱')
-  },
-
-  updateFadeVolume: () => {
-    const state = get()
-    if (!state.isFading || !state.fadeStartTime) return
-
-    const fadeDuration = 10 * 60 * 1000
-    const elapsed = Date.now() - state.fadeStartTime
-    const progress = Math.min(1, elapsed / fadeDuration)
-    const volume = Math.max(0, 1 - progress)
-
-    set({ currentVolume: volume })
   },
 
   reset: () => {

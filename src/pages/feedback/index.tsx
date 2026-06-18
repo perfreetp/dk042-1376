@@ -1,48 +1,58 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { getSceneById } from '@/data/scenes'
 import { getUserStateById } from '@/data/states'
 import FeedbackQuestion from '@/components/FeedbackQuestion'
-import dayjs from 'dayjs'
+import { SleepRecord } from '@/types'
 import styles from './index.module.scss'
 
 const FeedbackPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false)
+  const [pendingRecord, setPendingRecord] = useState<SleepRecord | null>(null)
   const {
     currentFeedback,
     isSubmitting,
-    initFeedback,
+    initFeedbackFromRecord,
     setFasterAsleep,
     setWokeUp,
     setSoundHarsh,
     submitFeedback,
-    resetCurrentFeedback
+    resetCurrentFeedback,
+    checkPendingFeedback,
+    getPendingRecord
   } = useFeedbackStore()
 
-  const { feedbackCount, getSleepRecords } = usePreferenceStore()
+  const { feedbackCount } = usePreferenceStore()
+
+  const [pendingRecord, setPendingRecord] = useState<SleepRecord | null>(() => {
+    checkPendingFeedback()
+    return getPendingRecord()
+  })
+
+  useDidShow(() => {
+    checkPendingFeedback()
+    const record = getPendingRecord()
+    setPendingRecord(record)
+    if (record && !currentFeedback) {
+      initFeedbackFromRecord(record)
+    }
+  })
 
   useEffect(() => {
-    const records = getSleepRecords()
-    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-    const yesterdayRecord = records.find((r: { date: string }) => r.date === yesterday)
-
-    if (yesterdayRecord) {
-      initFeedback(
-        yesterdayRecord.sceneId,
-        yesterdayRecord.userStateId,
-        yesterdayRecord.duration
-      )
-    } else {
-      initFeedback('rainy-night', 'anxiety', 45)
+    checkPendingFeedback()
+    const record = getPendingRecord()
+    setPendingRecord(record)
+    if (record) {
+      initFeedbackFromRecord(record)
     }
 
     return () => {
       resetCurrentFeedback()
     }
-  }, [initFeedback, resetCurrentFeedback, getSleepRecords])
+  }, [checkPendingFeedback, getPendingRecord, initFeedbackFromRecord, resetCurrentFeedback])
 
   const questionConfigs = useMemo(() => [
     {
@@ -110,6 +120,7 @@ const FeedbackPage: React.FC = () => {
     const success = await submitFeedback()
     if (success) {
       setShowSuccess(true)
+      setPendingRecord(null)
       console.log('[FeedbackPage] 反馈提交成功')
     } else {
       Taro.showToast({
@@ -124,12 +135,37 @@ const FeedbackPage: React.FC = () => {
     Taro.navigateBack()
   }, [])
 
+  const handleBackHome = useCallback(() => {
+    Taro.switchTab({
+      url: '/pages/home/index'
+    })
+  }, [])
+
   const scene = currentFeedback?.sceneId ? getSceneById(currentFeedback.sceneId) : null
   const state = currentFeedback?.userStateId ? getUserStateById(currentFeedback.userStateId) : null
 
   const getSelectedValue = (key: string): string | null => {
     if (!currentFeedback) return null
-    return (currentFeedback as any)[key] || null
+    return (currentFeedback as Record<string, unknown>)[key] as string | null || null
+  }
+
+  const noPendingRecord = !pendingRecord && !showSuccess
+
+  if (noPendingRecord) {
+    return (
+      <ScrollView className={styles.feedbackPage} scrollY>
+        <View className={styles.emptyState}>
+          <Text className={styles.emptyIcon}>📭</Text>
+          <Text className={styles.emptyTitle}>没有可反馈的睡眠记录</Text>
+          <Text className={styles.emptyDesc}>
+            昨晚还没有播放过的记录哦。今晚使用助眠白噪音入睡后，次日就可以来这里反馈睡眠情况，帮助我们为你推荐更合适的场景。
+          </Text>
+          <View className={styles.homeButton} onClick={handleBackHome}>
+            回首页
+          </View>
+        </View>
+      </ScrollView>
+    )
   }
 
   return (

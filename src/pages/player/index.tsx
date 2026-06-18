@@ -24,17 +24,22 @@ const PlayerPage: React.FC = () => {
     currentVolume,
     remainingTime,
     elapsedTime,
+    startTime,
     setUserState,
     setDuration,
     setMix,
     startPlayback,
     pausePlayback,
+    resumePlayback,
     stopPlayback,
     updateElapsedTime
   } = usePlayerStore()
 
   const currentScene = useMemo(() => getSceneById(sceneId), [sceneId])
   const currentState = useMemo(() => getUserStateById(userStateId), [userStateId])
+
+  const sessionStarted = startTime !== null
+  const isPaused = sessionStarted && !isPlaying
 
   useAudioPlayer({
     mix,
@@ -50,10 +55,10 @@ const PlayerPage: React.FC = () => {
   useEffect(() => {
     return () => {
       if (isPlaying) {
-        stopPlayback()
+        pausePlayback()
       }
     }
-  }, [isPlaying, stopPlayback])
+  }, [isPlaying, pausePlayback])
 
   const handleStateSelect = useCallback((stateId: string) => {
     setUserState(stateId)
@@ -66,18 +71,23 @@ const PlayerPage: React.FC = () => {
 
   const handleStart = useCallback(() => {
     startPlayback()
-    console.log('[PlayerPage] 开始播放', { sceneId, userStateId, duration })
+    console.log('[PlayerPage] 全新开始播放', { sceneId, userStateId, duration })
   }, [startPlayback, sceneId, userStateId, duration])
 
   const handlePause = useCallback(() => {
     pausePlayback()
-    console.log('[PlayerPage] 暂停播放')
-  }, [pausePlayback])
+    console.log('[PlayerPage] 暂停播放，保留进度', { elapsedTime, remainingTime })
+  }, [pausePlayback, elapsedTime, remainingTime])
+
+  const handleResume = useCallback(() => {
+    resumePlayback()
+    console.log('[PlayerPage] 继续播放，从', elapsedTime, '秒处接续')
+  }, [resumePlayback, elapsedTime])
 
   const handleStop = useCallback(() => {
     Taro.showModal({
       title: '确认停止',
-      content: '确定要停止播放吗？将保存本次记录。',
+      content: '确定要停止播放吗？将保存本次睡眠记录。',
       confirmText: '停止',
       cancelText: '继续',
       success: (res) => {
@@ -117,7 +127,7 @@ const PlayerPage: React.FC = () => {
         </View>
       </View>
 
-      {!isPlaying && (
+      {!sessionStarted && (
         <>
           <View className={styles.stateSelector}>
             <View className={styles.sectionHeader}>
@@ -177,11 +187,12 @@ const PlayerPage: React.FC = () => {
         </>
       )}
 
-      {isPlaying && (
+      {(isPlaying || isPaused) && (
         <>
           <View className={styles.timerSection}>
             <Text className={styles.timerDisplay}>{formatTime(remainingTime)}</Text>
             <Text className={styles.timerLabel}>
+              {isPaused ? '已暂停 · ' : ''}
               还剩 {Math.ceil(remainingTime / 60)} 分钟
             </Text>
             {isFading && (
@@ -225,12 +236,22 @@ const PlayerPage: React.FC = () => {
             <View className={styles.controlButton} onClick={handleStop}>
               <Text>⏹️</Text>
             </View>
-            <View
-              className={`${styles.controlButton} ${styles.playButton}`}
-              onClick={handlePause}
-            >
-              <Text>⏸️</Text>
-            </View>
+            {isPlaying && (
+              <View
+                className={`${styles.controlButton} ${styles.playButton}`}
+                onClick={handlePause}
+              >
+                <Text>⏸️</Text>
+              </View>
+            )}
+            {isPaused && (
+              <View
+                className={`${styles.controlButton} ${styles.playButton}`}
+                onClick={handleResume}
+              >
+                <Text>▶️</Text>
+              </View>
+            )}
             <View
               className={styles.controlButton}
               onClick={() => {

@@ -39,12 +39,12 @@ export interface PlaybackSettings {
   endTime: number | null
   isPlaying: boolean
   isFading: boolean
-  fadeStartTime: number | null
   currentVolume: number
 }
 
 export interface SleepFeedback {
   id: string
+  recordId: string
   date: string
   sceneId: string
   userStateId: string
@@ -65,7 +65,7 @@ export interface SleepRecord {
   duration: number
   startTime: number
   endTime: number
-  feedback?: SleepFeedback
+  feedbackId?: string
 }
 
 export interface UserPreference {

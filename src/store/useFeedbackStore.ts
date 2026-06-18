@@ -1,37 +1,94 @@
 import { create } from 'zustand'
-import { SleepFeedback } from '@/types'
+import { SleepFeedback, SleepRecord } from '@/types'
 import dayjs from 'dayjs'
 
 interface FeedbackState {
   currentFeedback: Partial<SleepFeedback> | null
   isSubmitting: boolean
   hasPendingFeedback: boolean
-  initFeedback: (sceneId: string, userStateId: string, duration: number) => void
+  pendingRecord: SleepRecord | null
+  checkPendingFeedback: () => boolean
+  getPendingRecord: () => SleepRecord | null
+  initFeedbackFromRecord: (record: SleepRecord) => void
   setFasterAsleep: (value: 'yes' | 'no' | 'somewhat') => void
   setWokeUp: (value: 'never' | 'once' | 'multiple') => void
   setSoundHarsh: (value: 'yes' | 'no' | 'somewhat') => void
   submitFeedback: () => Promise<boolean>
   resetCurrentFeedback: () => void
-  checkPendingFeedback: () => boolean
 }
 
 const generateId = () => `feedback-${Date.now()}`
+
+const readRecords = (): SleepRecord[] => {
+  try {
+    return JSON.parse(localStorage.getItem('sleepRecords') || '[]')
+  } catch {
+    return []
+  }
+}
+
+const writeRecords = (records: SleepRecord[]) => {
+  localStorage.setItem('sleepRecords', JSON.stringify(records.slice(0, 30)))
+}
+
+const readFeedbacks = (): SleepFeedback[] => {
+  try {
+    return JSON.parse(localStorage.getItem('sleepFeedbacks') || '[]')
+  } catch {
+    return []
+  }
+}
+
+const writeFeedbacks = (feedbacks: SleepFeedback[]) => {
+  localStorage.setItem('sleepFeedbacks', JSON.stringify(feedbacks))
+}
 
 export const useFeedbackStore = create<FeedbackState>((set, get) => ({
   currentFeedback: null,
   isSubmitting: false,
   hasPendingFeedback: false,
+  pendingRecord: null,
 
-  initFeedback: (sceneId: string, userStateId: string, duration: number) => {
+  checkPendingFeedback: (): boolean => {
+    const records = readRecords()
+    const feedbacks = readFeedbacks()
+    const feedbackedRecordIds = new Set(feedbacks.map(f => f.recordId))
+
+    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
+    const today = dayjs().format('YYYY-MM-DD')
+
+    const pending = records
+      .filter(r => r.date !== today)
+      .filter(r => r.date <= yesterday)
+      .filter(r => !feedbackedRecordIds.has(r.id) && !r.feedbackId)
+      .sort((a, b) => b.startTime - a.startTime)
+
+    const hasPending = pending.length > 0
+    const pendingRecord = pending[0] || null
+    set({ hasPendingFeedback: hasPending, pendingRecord })
+
+    console.log('[FeedbackStore] checkPendingFeedback', {
+      hasPending,
+      pendingRecordId: pendingRecord?.id
+    })
+    return hasPending
+  },
+
+  getPendingRecord: (): SleepRecord | null => {
+    return get().pendingRecord
+  },
+
+  initFeedbackFromRecord: (record: SleepRecord) => {
     set({
       currentFeedback: {
-        sceneId,
-        userStateId,
-        duration,
-        date: dayjs().format('YYYY-MM-DD')
+        recordId: record.id,
+        sceneId: record.sceneId,
+        userStateId: record.userStateId,
+        duration: record.duration,
+        date: record.date
       }
     })
-    console.log('[FeedbackStore] initFeedback', { sceneId, userStateId, duration })
+    console.log('[FeedbackStore] initFeedbackFromRecord', { recordId: record.id })
   },
 
   setFasterAsleep: (value: 'yes' | 'no' | 'somewhat') => {
@@ -61,10 +118,11 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
   submitFeedback: async (): Promise<boolean> => {
     const state = get()
     if (!state.currentFeedback ||
+        !state.currentFeedback.recordId ||
         !state.currentFeedback.fasterAsleep ||
         !state.currentFeedback.wokeUp ||
         !state.currentFeedback.soundHarsh) {
-      console.error('[FeedbackStore] submitFeedback - 反馈不完整')
+      console.error('[FeedbackStore] submitFeedback 反馈不完整')
       return false
     }
 
@@ -77,9 +135,14 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
         createdAt: Date.now()
       } as SleepFeedback
 
-      const existingFeedbacks = JSON.parse(localStorage.getItem('sleepFeedbacks') || '[]')
-      const allFeedbacks = [feedback, ...existingFeedbacks]
-      localStorage.setItem('sleepFeedbacks', JSON.stringify(allFeedbacks))
+      const allFeedbacks = [feedback, ...readFeedbacks()]
+      writeFeedbacks(allFeedbacks)
+
+      const records = readRecords()
+      const updatedRecords = records.map(r =>
+        r.id === feedback.recordId ? { ...r, feedbackId: feedback.id } : r
+      )
+      writeRecords(updatedRecords)
 
       const preferenceStore = JSON.parse(localStorage.getItem('userPreference') || '{}')
       const recentFeedbacks = allFeedbacks.slice(0, 3)
@@ -106,7 +169,7 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
         })
 
         preferenceStore.recommendedSceneId = bestSceneId
-        console.log('[FeedbackStore] 三次反馈后推荐场景:', { bestSceneId, bestScore, sceneScores })
+        console.log('[FeedbackStore] 三次反馈后推荐场景', { bestSceneId, bestScore, sceneScores })
       }
 
       localStorage.setItem('userPreference', JSON.stringify(preferenceStore))
@@ -114,13 +177,14 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
       set({
         currentFeedback: null,
         isSubmitting: false,
-        hasPendingFeedback: false
+        hasPendingFeedback: false,
+        pendingRecord: null
       })
 
-      console.log('[FeedbackStore] submitFeedback - 成功', feedback)
+      console.log('[FeedbackStore] submitFeedback 成功', feedback)
       return true
     } catch (error) {
-      console.error('[FeedbackStore] submitFeedback - 失败', error)
+      console.error('[FeedbackStore] submitFeedback 失败', error)
       set({ isSubmitting: false })
       return false
     }
@@ -131,20 +195,5 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
       currentFeedback: null,
       isSubmitting: false
     })
-  },
-
-  checkPendingFeedback: (): boolean => {
-    const records = JSON.parse(localStorage.getItem('sleepRecords') || '[]')
-    const feedbacks = JSON.parse(localStorage.getItem('sleepFeedbacks') || '[]')
-    const feedbackDates = new Set(feedbacks.map((f: SleepFeedback) => f.date))
-
-    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-    const hasYesterdayRecord = records.some((r: { date: string }) => r.date === yesterday)
-    const hasYesterdayFeedback = feedbackDates.has(yesterday)
-
-    const hasPending = hasYesterdayRecord && !hasYesterdayFeedback
-    set({ hasPendingFeedback: hasPending })
-
-    return hasPending
   }
 }))
