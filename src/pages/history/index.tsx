@@ -46,18 +46,24 @@ const HistoryPage: React.FC = () => {
 
     if (feedback.soundHarsh === 'no') labels.push('声音舒适 ✓')
     else if (feedback.soundHarsh === 'somewhat') labels.push('略有不适')
+    else if (feedback.soundHarsh === 'yes') labels.push('声音刺耳')
 
     return labels
   }, [])
 
+  const formatSleepNightLabel = (sleepNight: string, origDate: string) => {
+    const night = sleepNight || origDate
+    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
+    if (night === yesterday) return '昨晚'
+    const twoDaysAgo = dayjs().subtract(2, 'day').format('YYYY-MM-DD')
+    if (night === twoDaysAgo) return '前天晚上'
+    return dayjs(night).format('YYYY年MM月DD日晚')
+  }
+
   const groupedRecords = useMemo(() => {
     const groups: Record<string, SleepRecord[]> = {}
     records.forEach(record => {
-      const dateLabel = record.date === dayjs().format('YYYY-MM-DD')
-        ? '今天'
-        : record.date === dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-          ? '昨天'
-          : dayjs(record.date).format('YYYY年MM月DD日')
+      const dateLabel = formatSleepNightLabel(record.sleepNight, record.date)
 
       if (!groups[dateLabel]) {
         groups[dateLabel] = []

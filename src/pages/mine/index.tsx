@@ -3,7 +3,9 @@ import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
+import { usePlayerStore } from '@/store/usePlayerStore'
 import { getSceneById } from '@/data/scenes'
+import { SleepFeedback } from '@/types'
 import styles from './index.module.scss'
 
 const MinePage: React.FC = () => {
@@ -12,10 +14,12 @@ const MinePage: React.FC = () => {
     recommendedSceneId,
     feedbackCount,
     getSleepRecords,
+    getSleepFeedbacks,
     getAverageSleepDuration,
     getMostUsedScene
   } = usePreferenceStore()
   const { hasPendingFeedback, checkPendingFeedback } = useFeedbackStore()
+  const { setScene } = usePlayerStore()
   const [refreshKey, setRefreshKey] = useState(0)
 
   useDidShow(() => {
@@ -30,6 +34,7 @@ const MinePage: React.FC = () => {
   }, [loadPreference])
 
   const records = useMemo(() => getSleepRecords(), [getSleepRecords, refreshKey])
+  const feedbacks = useMemo(() => getSleepFeedbacks(), [getSleepFeedbacks, refreshKey])
   const avgDuration = useMemo(() => getAverageSleepDuration(), [getAverageSleepDuration, refreshKey])
   const mostUsedSceneId = useMemo(() => getMostUsedScene(), [getMostUsedScene, refreshKey])
 
@@ -52,9 +57,62 @@ const MinePage: React.FC = () => {
     })
   }, [])
 
+  const handleStartRecommended = useCallback(() => {
+    if (recommendedSceneId) {
+      setScene(recommendedSceneId)
+      Taro.navigateTo({
+        url: '/pages/player/index'
+      })
+    }
+  }, [recommendedSceneId, setScene])
+
   const mostUsedScene = mostUsedSceneId ? getSceneById(mostUsedSceneId) : null
   const recommendedScene = recommendedSceneId ? getSceneById(recommendedSceneId) : null
   const progressPercent = Math.min(100, (feedbackCount % 3) / 3 * 100)
+
+  const recommendationReasons = useMemo(() => {
+    if (!recommendedSceneId || feedbacks.length === 0) return []
+
+    const sceneFeedbacks = feedbacks
+      .filter(f => f.sceneId === recommendedSceneId)
+      .slice(0, 3)
+
+    if (sceneFeedbacks.length === 0) return []
+
+    const reasons: { icon: string; text: string }[] = []
+    const fasterAsleepYes = sceneFeedbacks.filter(f => f.fasterAsleep === 'yes').length
+    const fasterAsleepSomewhat = sceneFeedbacks.filter(f => f.fasterAsleep === 'somewhat').length
+
+    if (fasterAsleepYes > 0) {
+      reasons.push({
+        icon: '✅',
+        text: `最近${fasterAsleepYes}次使用，入睡都比平时快`
+      })
+    } else if (fasterAsleepSomewhat > 0) {
+      reasons.push({
+        icon: '🙂',
+        text: `最近${fasterAsleepSomewhat}次都有轻微帮助`
+      })
+    }
+
+    const neverWoke = sceneFeedbacks.filter(f => f.wokeUp === 'never').length
+    if (neverWoke > 0) {
+      reasons.push({
+        icon: '😴',
+        text: `${neverWoke}次都安睡整晚，没有中途醒来`
+      })
+    }
+
+    const soundComfortable = sceneFeedbacks.filter(f => f.soundHarsh === 'no').length
+    if (soundComfortable > 0) {
+      reasons.push({
+        icon: '🎵',
+        text: `声音舒适度在${soundComfortable}次反馈中都得到好评`
+      })
+    }
+
+    return reasons.slice(0, 3)
+  }, [recommendedSceneId, feedbacks])
 
   return (
     <ScrollView className={styles.minePage} scrollY>
@@ -104,16 +162,44 @@ const MinePage: React.FC = () => {
 
       {recommendedScene && feedbackCount >= 3 && (
         <View className={styles.recommendationCard}>
-          <Text className={styles.recommendationTitle}>✨ 你的专属推荐</Text>
+          <View className={styles.recommendationHeader}>
+            <View
+              className={styles.recommendationIcon}
+              style={{ backgroundColor: `${recommendedScene.color}20` }}
+            >
+              <Text>{recommendedScene.icon}</Text>
+            </View>
+            <View className={styles.recommendationInfo}>
+              <Text className={styles.recommendationTitle}>✨ 你的专属推荐</Text>
+              <Text className={styles.recommendationScene}>
+                「{recommendedScene.name}」
+              </Text>
+            </View>
+          </View>
           <Text className={styles.recommendationDesc}>
-            基于你的 {feedbackCount} 次睡眠反馈，系统为你推荐「{recommendedScene.name}」
-            作为默认睡眠场景。
+            基于你的 {feedbackCount} 次睡眠反馈，这是综合得分最高的场景。
           </Text>
-          {mostUsedScene && (
+          {recommendationReasons.length > 0 && (
+            <View className={styles.recommendationReasons}>
+              <Text className={styles.reasonsTitle}>推荐理由</Text>
+              <View className={styles.reasonsList}>
+                {recommendationReasons.map((reason, idx) => (
+                  <View key={idx} className={styles.reasonItem}>
+                    <Text className={styles.icon}>{reason.icon}</Text>
+                    <Text>{reason.text}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+          {mostUsedScene && mostUsedScene.id !== recommendedScene.id && (
             <Text className={styles.recommendationDesc} style={{ marginTop: '16rpx' }}>
               你最常使用的是「{mostUsedScene.name}」，已使用 {records.filter(r => r.sceneId === mostUsedSceneId).length} 次。
             </Text>
           )}
+          <View className={styles.recommendationStart} onClick={handleStartRecommended}>
+            立即使用推荐场景
+          </View>
         </View>
       )}
 

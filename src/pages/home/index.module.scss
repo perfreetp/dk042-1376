@@ -191,3 +191,104 @@
   font-size: $font-size-sm;
   color: $color-text-secondary;
 }
+
+.lastNightCard {
+  background: $gradient-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  border: 2rpx solid $color-border;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    background: $color-bg-hover;
+  }
+}
+
+.lastNightHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.lastNightTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.lastNightBadge {
+  font-size: $font-size-xs;
+  color: $color-accent-teal;
+  background: rgba(61, 213, 152, 0.15);
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+}
+
+.lastNightArrow {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.lastNightContent {
+  display: flex;
+  align-items: center;
+}
+
+.lastNightIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  background: rgba(74, 108, 247, 0.2);
+  margin-right: $spacing-md;
+}
+
+.lastNightInfo {
+  flex: 1;
+}
+
+.lastNightScene {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.lastNightMeta {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.lastNightTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.lastNightTag {
+  padding: 6rpx $spacing-sm;
+  background: rgba(74, 108, 247, 0.12);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $color-accent-blue;
+
+  &.positive {
+    background: rgba(61, 213, 152, 0.15);
+    color: $color-accent-teal;
+  }
+
+  &.neutral {
+    background: rgba(255, 159, 67, 0.15);
+    color: $color-warning;
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
 import { usePlayerStore } from '@/store/usePlayerStore'
@@ -6,13 +6,14 @@ import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
 import { scenes, getSceneById } from '@/data/scenes'
 import SceneCard from '@/components/SceneCard'
+import { SleepRecord, SleepFeedback } from '@/types'
 import dayjs from 'dayjs'
 import styles from './index.module.scss'
 
 const HomePage: React.FC = () => {
   const [greeting, setGreeting] = useState('')
   const { setScene } = usePlayerStore()
-  const { loadPreference, recommendedSceneId, getSleepRecords, getAverageSleepDuration, feedbackCount } = usePreferenceStore()
+  const { loadPreference, recommendedSceneId, getSleepRecords, getSleepFeedbacks, getAverageSleepDuration, feedbackCount } = usePreferenceStore()
   const { hasPendingFeedback, checkPendingFeedback } = useFeedbackStore()
   const [, forceUpdate] = useState(0)
 
@@ -68,6 +69,66 @@ const HomePage: React.FC = () => {
   const records = getSleepRecords()
   const avgDuration = getAverageSleepDuration()
 
+  const lastNightSummary = useMemo(() => {
+    const feedbacks = getSleepFeedbacks()
+    const feedbackMap: Record<string, SleepFeedback> = {}
+    feedbacks.forEach(f => {
+      feedbackMap[f.recordId] = f
+    })
+
+    const sorted = [...records].sort((a, b) => b.startTime - a.startTime)
+    for (const record of sorted) {
+      const feedback = record.feedbackId
+        ? feedbacks.find(f => f.id === record.feedbackId)
+        : feedbackMap[record.id]
+      if (feedback) {
+        const tags: { label: string; type: 'positive' | 'neutral' | 'default' }[] = []
+
+        if (feedback.fasterAsleep === 'yes') {
+          tags.push({ label: '入睡更快 ✓', type: 'positive' })
+        } else if (feedback.fasterAsleep === 'somewhat') {
+          tags.push({ label: '稍有帮助', type: 'neutral' })
+        }
+
+        if (feedback.wokeUp === 'never') {
+          tags.push({ label: '安睡整晚 ✓', type: 'positive' })
+        } else if (feedback.wokeUp === 'once') {
+          tags.push({ label: '醒来一次', type: 'neutral' })
+        } else if (feedback.wokeUp === 'multiple') {
+          tags.push({ label: '多次醒来', type: 'default' })
+        }
+
+        if (feedback.soundHarsh === 'no') {
+          tags.push({ label: '声音舒适 ✓', type: 'positive' })
+        } else if (feedback.soundHarsh === 'somewhat') {
+          tags.push({ label: '略有不适', type: 'neutral' })
+        } else if (feedback.soundHarsh === 'yes') {
+          tags.push({ label: '声音刺耳', type: 'default' })
+        }
+
+        const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
+        const isLastNight = record.sleepNight === yesterday
+
+        return { record, feedback, tags, isLastNight }
+      }
+    }
+    return null
+  }, [records, getSleepFeedbacks])
+
+  const formatSleepNight = (sleepNight: string) => {
+    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
+    if (sleepNight === yesterday) return '昨晚'
+    const twoDaysAgo = dayjs().subtract(2, 'day').format('YYYY-MM-DD')
+    if (sleepNight === twoDaysAgo) return '前天晚上'
+    return dayjs(sleepNight).format('MM月DD日晚')
+  }
+
+  const handleLastNightClick = useCallback(() => {
+    Taro.navigateTo({
+      url: '/pages/history/index'
+    })
+  }, [])
+
   return (
     <ScrollView className={styles.homePage} scrollY>
       <View className={styles.greeting}>
@@ -82,6 +143,44 @@ const HomePage: React.FC = () => {
             <Text className={styles.feedbackDesc}>花30秒完成反馈，下次更懂你</Text>
           </View>
           <Text className={styles.feedbackAction}>去反馈</Text>
+        </View>
+      )}
+
+      {lastNightSummary && (
+        <View className={styles.lastNightCard} onClick={handleLastNightClick}>
+          <View className={styles.lastNightHeader}>
+            <View className={styles.lastNightTitle}>
+              <Text>{formatSleepNight(lastNightSummary.record.sleepNight)}睡眠摘要</Text>
+              <Text className={styles.lastNightBadge}>已反馈</Text>
+            </View>
+            <Text className={styles.lastNightArrow}>›</Text>
+          </View>
+          <View className={styles.lastNightContent}>
+            <View
+              className={styles.lastNightIcon}
+              style={{ backgroundColor: lastNightSummary.record.sceneId ? `${(getSceneById(lastNightSummary.record.sceneId)?.color || '#4a6cf7')}20` : 'rgba(74, 108, 247, 0.2)' }}
+            >
+              <Text>{getSceneById(lastNightSummary.record.sceneId)?.icon || '🌙'}</Text>
+            </View>
+            <View className={styles.lastNightInfo}>
+              <Text className={styles.lastNightScene}>
+                {lastNightSummary.record.sceneName} · {lastNightSummary.record.userStateName}
+              </Text>
+              <Text className={styles.lastNightMeta}>
+                播放 {lastNightSummary.record.duration} 分钟 · {dayjs(lastNightSummary.record.startTime).format('HH:mm')} 开始
+              </Text>
+              <View className={styles.lastNightTags}>
+                {lastNightSummary.tags.map((tag, idx) => (
+                  <Text
+                    key={idx}
+                    className={`${styles.lastNightTag} ${styles[tag.type]}`}
+                  >
+                    {tag.label}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          </View>
         </View>
       )}
 

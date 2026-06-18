@@ -150,6 +150,55 @@
   margin-bottom: $spacing-xl;
 }
 
+.optionalSection {
+  margin-top: $spacing-lg;
+  padding-top: $spacing-lg;
+  border-top: 2rpx solid $color-divider;
+}
+
+.optionalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.optionalTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.optionalTag {
+  font-size: $font-size-xs;
+  color: $color-accent-teal;
+  background: rgba(61, 213, 152, 0.15);
+  padding: 4rpx $spacing-sm;
+  border-radius: $radius-xs;
+}
+
+.optionalToggle {
+  font-size: $font-size-md;
+  color: $color-accent-blue;
+  transition: transform $transition-base;
+
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}
+
+.optionalContent {
+  overflow: hidden;
+  transition: all $transition-base;
+}
+
 .bottomBar {
   position: fixed;
   left: 0;
@@ -160,6 +209,13 @@
   background: rgba(15, 15, 26, 0.95);
   backdrop-filter: blur(20rpx);
   border-top: 2rpx solid $color-border;
+}
+
+.bottomHint {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  text-align: center;
+  margin-top: $spacing-sm;
 }
 
 .submitButton {

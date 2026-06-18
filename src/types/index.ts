@@ -50,14 +50,15 @@ export interface SleepFeedback {
   userStateId: string
   duration: number
   fasterAsleep: 'yes' | 'no' | 'somewhat'
-  wokeUp: 'never' | 'once' | 'multiple'
-  soundHarsh: 'yes' | 'no' | 'somewhat'
+  wokeUp?: 'never' | 'once' | 'multiple'
+  soundHarsh?: 'yes' | 'no' | 'somewhat'
   createdAt: number
 }
 
 export interface SleepRecord {
   id: string
   date: string
+  sleepNight: string
   sceneId: string
   sceneName: string
   userStateId: string

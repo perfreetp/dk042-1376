@@ -57,7 +57,7 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
 
     const pending = records
-      .filter(r => r.date === yesterday)
+      .filter(r => r.sleepNight === yesterday)
       .filter(r => !feedbackedRecordIds.has(r.id) && !r.feedbackId)
       .sort((a, b) => b.startTime - a.startTime)
 
@@ -65,7 +65,7 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
     const pendingRecord = pending[0] || null
     set({ hasPendingFeedback: hasPending, pendingRecord })
 
-    console.log('[FeedbackStore] checkPendingFeedback 严格匹配昨晚记录', {
+    console.log('[FeedbackStore] checkPendingFeedback 按 sleepNight 匹配昨晚', {
       yesterday,
       hasPending,
       pendingRecordId: pendingRecord?.id
@@ -118,10 +118,8 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
     const state = get()
     if (!state.currentFeedback ||
         !state.currentFeedback.recordId ||
-        !state.currentFeedback.fasterAsleep ||
-        !state.currentFeedback.wokeUp ||
-        !state.currentFeedback.soundHarsh) {
-      console.error('[FeedbackStore] submitFeedback 反馈不完整')
+        !state.currentFeedback.fasterAsleep) {
+      console.error('[FeedbackStore] submitFeedback 反馈不完整（缺少 fasterAsleep）')
       return false
     }
 
@@ -151,24 +149,30 @@ export const useFeedbackStore = create<FeedbackState>((set, get) => ({
       if (recentFeedbacks.length >= 3) {
         const sceneScores: Record<string, number> = {}
         recentFeedbacks.forEach((fb: SleepFeedback) => {
-          const score =
-            (fb.fasterAsleep === 'yes' ? 2 : fb.fasterAsleep === 'somewhat' ? 1 : 0) +
-            (fb.wokeUp === 'never' ? 2 : fb.wokeUp === 'once' ? 1 : 0) +
-            (fb.soundHarsh === 'no' ? 2 : fb.soundHarsh === 'somewhat' ? 1 : 0)
+          let score = 0
+          score += fb.fasterAsleep === 'yes' ? 2 : fb.fasterAsleep === 'somewhat' ? 1 : 0
+          if (fb.wokeUp) {
+            score += fb.wokeUp === 'never' ? 2 : fb.wokeUp === 'once' ? 1 : 0
+          }
+          if (fb.soundHarsh) {
+            score += fb.soundHarsh === 'no' ? 2 : fb.soundHarsh === 'somewhat' ? 1 : 0
+          }
           sceneScores[fb.sceneId] = (sceneScores[fb.sceneId] || 0) + score
         })
 
-        let bestSceneId = Object.keys(sceneScores)[0]
-        let bestScore = sceneScores[bestSceneId]
-        Object.keys(sceneScores).forEach(sceneId => {
-          if (sceneScores[sceneId] > bestScore) {
-            bestScore = sceneScores[sceneId]
-            bestSceneId = sceneId
-          }
-        })
-
-        preferenceStore.recommendedSceneId = bestSceneId
-        console.log('[FeedbackStore] 三次反馈后推荐场景', { bestSceneId, bestScore, sceneScores })
+        const sceneIds = Object.keys(sceneScores)
+        if (sceneIds.length > 0) {
+          let bestSceneId = sceneIds[0]
+          let bestScore = sceneScores[bestSceneId]
+          sceneIds.forEach(sceneId => {
+            if (sceneScores[sceneId] > bestScore) {
+              bestScore = sceneScores[sceneId]
+              bestSceneId = sceneId
+            }
+          })
+          preferenceStore.recommendedSceneId = bestSceneId
+          console.log('[FeedbackStore] 三次反馈后推荐场景', { bestSceneId, bestScore, sceneScores })
+        }
       }
 
       localStorage.setItem('userPreference', JSON.stringify(preferenceStore))

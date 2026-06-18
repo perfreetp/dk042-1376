@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import classnames from 'classnames'
 import { useFeedbackStore } from '@/store/useFeedbackStore'
 import { usePreferenceStore } from '@/store/usePreferenceStore'
 import { getSceneById } from '@/data/scenes'
@@ -10,6 +11,7 @@ import styles from './index.module.scss'
 
 const FeedbackPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showOptional, setShowOptional] = useState(false)
   const {
     pendingRecord,
     currentFeedback,
@@ -45,16 +47,17 @@ const FeedbackPage: React.FC = () => {
     }
   }, [resetCurrentFeedback])
 
-  const questionConfigs = useMemo(() => [
-    {
-      key: 'fasterAsleep',
-      question: '昨晚是否比平时更快睡着？',
-      options: [
-        { value: 'yes', label: '是的，快了很多', icon: '✅' },
-        { value: 'somewhat', label: '稍微快了一点', icon: '🙂' },
-        { value: 'no', label: '没有太大区别', icon: '😐' }
-      ]
-    },
+  const requiredQuestion = useMemo(() => ({
+    key: 'fasterAsleep',
+    question: '昨晚是否比平时更快睡着？',
+    options: [
+      { value: 'yes', label: '是的，快了很多', icon: '✅' },
+      { value: 'somewhat', label: '稍微快了一点', icon: '🙂' },
+      { value: 'no', label: '没有太大区别', icon: '😐' }
+    ]
+  }), [])
+
+  const optionalQuestions = useMemo(() => [
     {
       key: 'wokeUp',
       question: '昨晚是否有半夜醒来？',
@@ -89,26 +92,20 @@ const FeedbackPage: React.FC = () => {
     }
   }, [setFasterAsleep, setWokeUp, setSoundHarsh])
 
-  const isComplete = useMemo(() => {
-    return !!(
-      currentFeedback &&
-      currentFeedback.fasterAsleep &&
-      currentFeedback.wokeUp &&
-      currentFeedback.soundHarsh
-    )
+  const canSubmit = useMemo(() => {
+    return !!(currentFeedback && currentFeedback.fasterAsleep)
   }, [currentFeedback])
 
-  const answeredCount = useMemo(() => {
+  const optionalAnswered = useMemo(() => {
     if (!currentFeedback) return 0
     let count = 0
-    if (currentFeedback.fasterAsleep) count++
     if (currentFeedback.wokeUp) count++
     if (currentFeedback.soundHarsh) count++
     return count
   }, [currentFeedback])
 
   const handleSubmit = useCallback(async () => {
-    if (!isComplete) return
+    if (!canSubmit) return
 
     const success = await submitFeedback()
     if (success) {
@@ -120,7 +117,7 @@ const FeedbackPage: React.FC = () => {
         icon: 'none'
       })
     }
-  }, [isComplete, submitFeedback])
+  }, [canSubmit, submitFeedback])
 
   const handleSuccessClose = useCallback(() => {
     setShowSuccess(false)
@@ -168,19 +165,19 @@ const FeedbackPage: React.FC = () => {
       <View className={styles.header}>
         <Text className={styles.title}>昨晚睡得怎么样？</Text>
         <Text className={styles.subtitle}>
-          花30秒完成反馈，帮助我们更好地了解你的睡眠习惯
+          回答一个必答问题就能提交，其他信息选填
         </Text>
       </View>
 
       <View className={styles.progressSection}>
         <View className={styles.progressLabel}>
-          <Text>已完成 {answeredCount}/3</Text>
-          <Text>{Math.round(answeredCount / 3 * 100)}%</Text>
+          <Text>必答 1/1 {optionalAnswered > 0 && `· 选填 ${optionalAnswered}/2`}</Text>
+          <Text>{canSubmit ? '可以提交' : '请先作答必答题'}</Text>
         </View>
         <View className={styles.progressBar}>
           <View
             className={styles.progressFill}
-            style={{ width: `${answeredCount / 3 * 100}%` }}
+            style={{ width: canSubmit ? '100%' : '0%' }}
           />
         </View>
       </View>
@@ -209,24 +206,52 @@ const FeedbackPage: React.FC = () => {
       )}
 
       <View className={styles.questions}>
-        {questionConfigs.map(config => (
-          <FeedbackQuestion
-            key={config.key}
-            question={config.question}
-            options={config.options}
-            selectedValue={getSelectedValue(config.key)}
-            onSelect={handleAnswerSelect(config.key)}
-          />
-        ))}
+        <FeedbackQuestion
+          question={requiredQuestion.question}
+          options={requiredQuestion.options}
+          selectedValue={getSelectedValue(requiredQuestion.key)}
+          onSelect={handleAnswerSelect(requiredQuestion.key)}
+        />
+
+        <View className={styles.optionalSection}>
+          <View
+            className={styles.optionalHeader}
+            onClick={() => setShowOptional(v => !v)}
+          >
+            <View className={styles.optionalTitle}>
+              <Text>更多睡眠细节（选填）</Text>
+              <Text className={styles.optionalTag}>帮助我们更懂你</Text>
+            </View>
+            <Text className={classnames(styles.optionalToggle, showOptional && styles.expanded)}>
+              ▾
+            </Text>
+          </View>
+          {showOptional && (
+            <View className={styles.optionalContent}>
+              {optionalQuestions.map(config => (
+                <FeedbackQuestion
+                  key={config.key}
+                  question={config.question}
+                  options={config.options}
+                  selectedValue={getSelectedValue(config.key)}
+                  onSelect={handleAnswerSelect(config.key)}
+                />
+              ))}
+            </View>
+          )}
+        </View>
       </View>
 
       <View className={styles.bottomBar}>
         <View
-          className={`${styles.submitButton} ${!isComplete ? styles.disabled : ''}`}
-          onClick={isComplete && !isSubmitting ? handleSubmit : undefined}
+          className={`${styles.submitButton} ${!canSubmit ? styles.disabled : ''}`}
+          onClick={canSubmit && !isSubmitting ? handleSubmit : undefined}
         >
           {isSubmitting ? '提交中...' : '提交反馈'}
         </View>
+        <Text className={styles.bottomHint}>
+          选填信息可以帮我们更精准推荐，但不会影响提交
+        </Text>
       </View>
 
       {showSuccess && (

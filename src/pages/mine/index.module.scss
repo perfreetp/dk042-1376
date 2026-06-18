@@ -149,17 +149,92 @@
   box-shadow: $shadow-glow;
 }
 
+.recommendationHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.recommendationIcon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  background: rgba(255, 255, 255, 0.2);
+  margin-right: $spacing-md;
+}
+
+.recommendationInfo {
+  flex: 1;
+}
+
 .recommendationTitle {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-text-white;
-  margin-bottom: $spacing-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.recommendationScene {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .recommendationDesc {
   font-size: $font-size-sm;
   color: rgba(255, 255, 255, 0.85);
   line-height: $line-height-normal;
+}
+
+.recommendationReasons {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.reasonsTitle {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: $spacing-sm;
+}
+
+.reasonsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.reasonItem {
+  display: flex;
+  align-items: center;
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.85);
+
+  .icon {
+    margin-right: $spacing-sm;
+  }
+}
+
+.recommendationStart {
+  margin-top: $spacing-lg;
+  height: $button-height-md;
+  background: $color-text-white;
+  color: $color-primary;
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
 }
 
 .feedbackProgress {

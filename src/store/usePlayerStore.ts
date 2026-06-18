@@ -144,9 +144,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (state.startTime && state.endTime) {
       const scene = getSceneById(state.sceneId)
       const userState = getUserStateById(state.userStateId)
+
+      const startHour = dayjs(state.startTime).hour()
+      const sleepNight = startHour < 12
+        ? dayjs(state.startTime).subtract(1, 'day').format('YYYY-MM-DD')
+        : dayjs(state.startTime).format('YYYY-MM-DD')
+
       const sleepRecord: SleepRecord = {
         id: `record-${Date.now()}`,
         date: dayjs().format('YYYY-MM-DD'),
+        sleepNight,
         sceneId: state.sceneId,
         sceneName: scene?.name || '',
         userStateId: state.userStateId,
@@ -157,7 +164,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       }
       const existingRecords = JSON.parse(localStorage.getItem('sleepRecords') || '[]')
       localStorage.setItem('sleepRecords', JSON.stringify([sleepRecord, ...existingRecords].slice(0, 30)))
-      console.log('[PlayerStore] stopPlayback 已保存记录', sleepRecord)
+      console.log('[PlayerStore] stopPlayback 已保存记录', sleepRecord, { sleepNight, startHour })
     }
 
     set({
