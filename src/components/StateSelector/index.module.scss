@@ -1,0 +1,84 @@
+@use '@/styles/variables.scss' as *;
+
+.stateSelector {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.stateList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.stateItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  border: 2rpx solid $color-border;
+  transition: all $transition-base;
+
+  &.active {
+    border-color: $color-accent-blue;
+    background: rgba(74, 108, 247, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.stateIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  background: rgba(255, 255, 255, 0.1);
+  margin-right: $spacing-md;
+}
+
+.stateContent {
+  flex: 1;
+}
+
+.stateName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.stateDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.stateCheck {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: $radius-round;
+  border: 3rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  color: transparent;
+  transition: all $transition-base;
+
+  .active & {
+    background: $gradient-accent;
+    border-color: transparent;
+    color: $color-text-white;
+  }
+}

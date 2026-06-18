@@ -1,0 +1,41 @@
+// ============================================
+// 主题配色变量（深夜助眠主题）
+// ============================================
+
+// 品牌主题色：宁静深靛蓝
+$color-primary: #1a1a2e;
+$color-primary-light: #16213e;
+$color-primary-dark: #0f0f1a;
+
+// 强调色
+$color-accent-blue: #4a6cf7;
+$color-accent-purple: #8b7cf3;
+$color-accent-teal: #3dd598;
+
+// 功能色
+$color-success: #3dd598;
+$color-warning: #ff9f43;
+$color-error: #ff6b6b;
+$color-info: #4a6cf7;
+
+// 背景色（深色主题）
+$color-bg-page: #0f0f1a;
+$color-bg-card: #1a1a2e;
+$color-bg-hover: #16213e;
+$color-bg-elevated: #1f1f35;
+
+// 文本色
+$color-text-primary: #e8e8f0;
+$color-text-secondary: #a0a0b8;
+$color-text-tertiary: #6c6c80;
+$color-text-disabled: #4a4a5e;
+$color-text-white: #ffffff;
+
+// 边框色
+$color-border: #2a2a40;
+$color-divider: #1f1f35;
+
+// 渐变
+$gradient-bg: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+$gradient-accent: linear-gradient(135deg, #4a6cf7 0%, #8b7cf3 100%);
+$gradient-card: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);

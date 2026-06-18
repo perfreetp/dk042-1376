@@ -1,0 +1,189 @@
+@use '@/styles/variables.scss' as *;
+
+.minePage {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: calc(#{$spacing-xl} + 120rpx);
+}
+
+.profileCard {
+  background: $gradient-card;
+  border-radius: $radius-lg;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-xl;
+  border: 2rpx solid $color-border;
+  box-shadow: $shadow-card;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-round;
+  background: $gradient-accent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  margin-right: $spacing-lg;
+  box-shadow: $shadow-glow;
+}
+
+.profileInfo {
+  flex: 1;
+}
+
+.userName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.userDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.statsRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.statCard {
+  flex: 1;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  text-align: center;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-accent-blue;
+  margin-bottom: $spacing-xs;
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.section {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}
+
+.menuList {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  border: 2rpx solid $color-border;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg;
+  transition: all $transition-base;
+  border-bottom: 2rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.menuIcon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  background: rgba(74, 108, 247, 0.15);
+  margin-right: $spacing-md;
+}
+
+.menuContent {
+  flex: 1;
+}
+
+.menuName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.menuDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: $spacing-xs;
+}
+
+.menuArrow {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+}
+
+.recommendationCard {
+  background: $gradient-accent;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-glow;
+}
+
+.recommendationTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  margin-bottom: $spacing-sm;
+}
+
+.recommendationDesc {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: $line-height-normal;
+}
+
+.feedbackProgress {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.progressText {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: $spacing-sm;
+}
+
+.progressBar {
+  height: 12rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-xs;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: $color-text-white;
+  border-radius: $radius-xs;
+  transition: width $transition-base;
+}

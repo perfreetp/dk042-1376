@@ -1,0 +1,60 @@
+@use '@/styles/variables.scss' as *;
+
+.durationSelector {
+  margin-bottom: $spacing-xl;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.durationList {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.durationItem {
+  flex: 1;
+  padding: $spacing-lg $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  border: 2rpx solid $color-border;
+  text-align: center;
+  transition: all $transition-base;
+
+  &.active {
+    border-color: $color-accent-blue;
+    background: rgba(74, 108, 247, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.durationValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+
+  .active & {
+    color: $color-accent-blue;
+  }
+}
+
+.durationLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.durationDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: $spacing-xs;
+  @include text-ellipsis;
+}

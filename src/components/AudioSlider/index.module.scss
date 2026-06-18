@@ -1,0 +1,89 @@
+@use '@/styles/variables.scss' as *;
+
+.audioSlider {
+  margin-bottom: $spacing-lg;
+}
+
+.sliderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.trackIcon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.trackName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.trackValue {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+  min-width: 80rpx;
+  text-align: right;
+}
+
+.sliderWrapper {
+  position: relative;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+}
+
+.sliderTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8rpx;
+  background: $color-bg-hover;
+  border-radius: $radius-xs;
+  overflow: hidden;
+}
+
+.sliderFill {
+  height: 100%;
+  border-radius: $radius-xs;
+  transition: width $transition-fast;
+}
+
+.sliderInput {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 100%;
+  opacity: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.sliderThumb {
+  position: absolute;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: $radius-round;
+  background: $color-text-white;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+  transition: left $transition-fast;
+  pointer-events: none;
+}

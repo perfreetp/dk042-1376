@@ -1,0 +1,70 @@
+@use '@/styles/variables.scss' as *;
+
+.sceneCard {
+  background: $gradient-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+  border: 2rpx solid $color-border;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.iconWrapper {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  margin-bottom: $spacing-md;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sceneName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.sceneDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  @include text-ellipsis-multi(2);
+}
+
+.suitableTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+}
+
+.tag {
+  padding: 6rpx $spacing-sm;
+  background: rgba(74, 108, 247, 0.15);
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  color: $color-accent-blue;
+}
+
+.recommended {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  padding: 4rpx $spacing-sm;
+  background: $gradient-accent;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  color: $color-text-white;
+}

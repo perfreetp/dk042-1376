@@ -1,0 +1,203 @@
+@use '@/styles/variables.scss' as *;
+
+.feedbackPage {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: calc(#{$spacing-xl} + 160rpx);
+}
+
+.header {
+  margin-bottom: $spacing-xl;
+}
+
+.title {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.subtitle {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+}
+
+.progressSection {
+  margin-bottom: $spacing-xl;
+}
+
+.progressLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: flex;
+  justify-content: space-between;
+}
+
+.progressBar {
+  height: 12rpx;
+  background: $color-bg-hover;
+  border-radius: $radius-xs;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: $gradient-accent;
+  border-radius: $radius-xs;
+  transition: width $transition-base;
+}
+
+.sessionInfo {
+  background: $gradient-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-xl;
+  border: 2rpx solid $color-border;
+}
+
+.infoTitle {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+.infoContent {
+  display: flex;
+  align-items: center;
+}
+
+.infoIcon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  background: rgba(74, 108, 247, 0.2);
+  margin-right: $spacing-md;
+}
+
+.infoText {
+  flex: 1;
+}
+
+.infoScene {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+}
+
+.infoMeta {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.questions {
+  margin-bottom: $spacing-xl;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-lg $page-padding;
+  padding-bottom: calc(#{$spacing-lg} + env(safe-area-inset-bottom));
+  background: rgba(15, 15, 26, 0.95);
+  backdrop-filter: blur(20rpx);
+  border-top: 2rpx solid $color-border;
+}
+
+.submitButton {
+  width: 100%;
+  height: $button-height-lg;
+  background: $gradient-accent;
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  box-shadow: $shadow-glow;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    background: $color-bg-hover;
+    color: $color-text-tertiary;
+    box-shadow: none;
+  }
+}
+
+.successOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 15, 26, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: $spacing-xl;
+}
+
+.successIcon {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: $radius-round;
+  background: $gradient-accent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80rpx;
+  margin-bottom: $spacing-xl;
+  box-shadow: $shadow-glow;
+}
+
+.successTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  text-align: center;
+}
+
+.successDesc {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  text-align: center;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-xl;
+}
+
+.successButton {
+  width: 100%;
+  max-width: 400rpx;
+  height: $button-height-lg;
+  background: $gradient-accent;
+  border-radius: $radius-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  box-shadow: $shadow-glow;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+}
