@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { UserPreference, SleepRecord, SleepFeedback } from '@/types'
 import dayjs from 'dayjs'
+import { normalizeSleepRecords } from '@/utils/sleep'
 
 interface PreferenceState extends UserPreference {
   loadPreference: () => void
@@ -35,7 +36,8 @@ export const usePreferenceStore = create<PreferenceState>((set, get) => ({
 
   getSleepRecords: (): SleepRecord[] => {
     try {
-      return JSON.parse(localStorage.getItem('sleepRecords') || '[]')
+      const raw: SleepRecord[] = JSON.parse(localStorage.getItem('sleepRecords') || '[]')
+      return normalizeSleepRecords(raw)
     } catch (error) {
       console.error('[PreferenceStore] getSleepRecords - 失败', error)
       return []

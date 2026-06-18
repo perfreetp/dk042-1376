@@ -292,3 +292,35 @@
     color: $color-warning;
   }
 }
+
+.lastNightCompare {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid $color-divider;
+}
+
+.compareItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+
+  .value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .label {
+    font-size: $font-size-xs;
+    color: $color-text-secondary;
+  }
+
+  &.highlight {
+    .value {
+      color: $color-accent-teal;
+    }
+  }
+}

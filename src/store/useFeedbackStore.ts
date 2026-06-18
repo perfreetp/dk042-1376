@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { SleepFeedback, SleepRecord } from '@/types'
 import dayjs from 'dayjs'
+import { normalizeSleepRecords } from '@/utils/sleep'
 
 interface FeedbackState {
   currentFeedback: Partial<SleepFeedback> | null
@@ -21,7 +22,8 @@ const generateId = () => `feedback-${Date.now()}`
 
 const readRecords = (): SleepRecord[] => {
   try {
-    return JSON.parse(localStorage.getItem('sleepRecords') || '[]')
+    const raw: SleepRecord[] = JSON.parse(localStorage.getItem('sleepRecords') || '[]')
+    return normalizeSleepRecords(raw)
   } catch {
     return []
   }

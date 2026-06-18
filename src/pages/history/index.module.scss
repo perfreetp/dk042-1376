@@ -174,10 +174,23 @@
 
 .feedbackTag {
   padding: 6rpx $spacing-sm;
-  background: rgba(61, 213, 152, 0.15);
   border-radius: $radius-sm;
   font-size: $font-size-xs;
-  color: $color-accent-teal;
+
+  &.positive {
+    background: rgba(61, 213, 152, 0.15);
+    color: $color-accent-teal;
+  }
+
+  &.neutral {
+    background: rgba(243, 186, 78, 0.15);
+    color: #f3ba4e;
+  }
+
+  &.negative {
+    background: rgba(239, 83, 80, 0.15);
+    color: #ef5350;
+  }
 }
 
 .noFeedback {
@@ -185,13 +198,73 @@
   color: $color-text-tertiary;
 }
 
-.dateGroup {
+.nightGroup {
   margin-bottom: $spacing-xl;
+  background: $gradient-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  border: 2rpx solid $color-border;
 }
 
-.dateHeader {
+.nightHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 2rpx solid $color-divider;
+}
+
+.nightTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.nightOverview {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+}
+
+.nightTag {
+  padding: 4rpx 16rpx;
+  background: rgba(74, 108, 247, 0.2);
+  border-radius: $radius-pill;
+  font-size: $font-size-xs;
+  color: $color-accent-blue;
+}
+
+.nightStats {
+  display: flex;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.nightStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.nightStatValue {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.nightStatLabel {
+  font-size: $font-size-xs;
   color: $color-text-secondary;
-  margin-bottom: $spacing-md;
+}
+
+.nightRecords {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.recordItem.highlighted {
+  border: 3rpx solid $color-accent-blue;
+  box-shadow: 0 0 0 6rpx rgba(74, 108, 247, 0.12);
 }

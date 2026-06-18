@@ -7,127 +7,128 @@ import { useFeedbackStore } from '@/store/useFeedbackStore'
 import { scenes, getSceneById } from '@/data/scenes'
 import SceneCard from '@/components/SceneCard'
 import { SleepRecord, SleepFeedback } from '@/types'
+import {
+  formatSleepNightLabel,
+  buildFeedbackTags,
+  getAverageDuration,
+  getMostUsedScene
+} from '@/utils/sleep'
 import dayjs from 'dayjs'
 import styles from './index.module.scss'
+
+interface LastNightSummary {
+  record: SleepRecord
+  feedback: SleepFeedback
+  tags: Array<{ label: string; type: 'positive' | 'neutral' | 'negative' }>
+  durationCompare: { text: string; better: boolean } | null
+  isMostUsedScene: boolean
+  mostUsedSceneName: string | null
+  isLastNight: boolean
+}
 
 const HomePage: React.FC = () => {
   const [greeting, setGreeting] = useState('')
   const { setScene } = usePlayerStore()
-  const { loadPreference, recommendedSceneId, getSleepRecords, getSleepFeedbacks, getAverageSleepDuration, feedbackCount } = usePreferenceStore()
+  const {
+    loadPreference,
+    recommendedSceneId,
+    getSleepRecords,
+    getSleepFeedbacks,
+    feedbackCount
+  } = usePreferenceStore()
   const { hasPendingFeedback, checkPendingFeedback } = useFeedbackStore()
-  const [, forceUpdate] = useState(0)
+  const [refreshTick, setRefreshTick] = useState(0)
 
   const refreshAll = useCallback(() => {
     loadPreference()
     checkPendingFeedback()
-    forceUpdate(n => n + 1)
+    setRefreshTick(n => n + 1)
 
     const hour = dayjs().hour()
-    if (hour >= 5 && hour < 12) {
-      setGreeting('早上好')
-    } else if (hour >= 12 && hour < 18) {
-      setGreeting('下午好')
-    } else {
-      setGreeting('晚上好')
-    }
+    if (hour >= 5 && hour < 12) setGreeting('早上好')
+    else if (hour >= 12 && hour < 18) setGreeting('下午好')
+    else setGreeting('晚上好')
   }, [loadPreference, checkPendingFeedback])
 
-  useDidShow(() => {
-    refreshAll()
-  })
+  useDidShow(() => { refreshAll() })
 
-  React.useEffect(() => {
-    refreshAll()
-  }, [refreshAll])
+  React.useEffect(() => { refreshAll() }, [refreshAll])
 
   const handleSceneClick = useCallback((sceneId: string) => {
     setScene(sceneId)
-    Taro.navigateTo({
-      url: '/pages/player/index'
-    })
-    console.log('[HomePage] 点击场景:', sceneId)
+    Taro.navigateTo({ url: '/pages/player/index' })
   }, [setScene])
 
   const handleQuickStart = useCallback(() => {
-    const defaultSceneId = recommendedSceneId || 'rainy-night'
-    handleSceneClick(defaultSceneId)
+    handleSceneClick(recommendedSceneId || 'rainy-night')
   }, [recommendedSceneId, handleSceneClick])
 
   const handleFeedbackClick = useCallback(() => {
-    Taro.navigateTo({
-      url: '/pages/feedback/index'
-    })
+    Taro.navigateTo({ url: '/pages/feedback/index' })
   }, [])
 
-  const handleHistoryClick = useCallback(() => {
-    Taro.navigateTo({
-      url: '/pages/history/index'
-    })
-  }, [])
+  const records = useMemo(() => getSleepRecords(), [getSleepRecords, refreshTick])
+  const feedbacks = useMemo(() => getSleepFeedbacks(), [getSleepFeedbacks, refreshTick])
+  const avgDuration = useMemo(() => getAverageDuration(records), [records])
+  const mostUsed = useMemo(() => getMostUsedScene(records), [records])
 
   const quickStartScene = getSceneById(recommendedSceneId || 'rainy-night') || scenes[1]
-  const records = getSleepRecords()
-  const avgDuration = getAverageSleepDuration()
 
-  const lastNightSummary = useMemo(() => {
-    const feedbacks = getSleepFeedbacks()
+  const lastNightSummary: LastNightSummary | null = useMemo(() => {
+    if (records.length === 0) return null
+
     const feedbackMap: Record<string, SleepFeedback> = {}
-    feedbacks.forEach(f => {
-      feedbackMap[f.recordId] = f
-    })
+    feedbacks.forEach(f => { feedbackMap[f.recordId] = f })
 
     const sorted = [...records].sort((a, b) => b.startTime - a.startTime)
     for (const record of sorted) {
       const feedback = record.feedbackId
         ? feedbacks.find(f => f.id === record.feedbackId)
         : feedbackMap[record.id]
-      if (feedback) {
-        const tags: { label: string; type: 'positive' | 'neutral' | 'default' }[] = []
+      if (!feedback) continue
 
-        if (feedback.fasterAsleep === 'yes') {
-          tags.push({ label: '入睡更快 ✓', type: 'positive' })
-        } else if (feedback.fasterAsleep === 'somewhat') {
-          tags.push({ label: '稍有帮助', type: 'neutral' })
+      const tags = buildFeedbackTags(feedback).map(t => ({
+        label: t.text + (t.type === 'positive' ? ' ✓' : ''),
+        type: t.type
+      }))
+
+      let durationCompare: { text: string; better: boolean } | null = null
+      if (avgDuration > 0) {
+        const diff = record.duration - avgDuration
+        if (Math.abs(diff) >= 5) {
+          if (diff > 0) {
+            durationCompare = { text: `比平均多 ${diff} 分钟`, better: true }
+          } else {
+            durationCompare = { text: `比平均少 ${-diff} 分钟`, better: false }
+          }
+        } else {
+          durationCompare = { text: '与平均时长相当', better: true }
         }
+      }
 
-        if (feedback.wokeUp === 'never') {
-          tags.push({ label: '安睡整晚 ✓', type: 'positive' })
-        } else if (feedback.wokeUp === 'once') {
-          tags.push({ label: '醒来一次', type: 'neutral' })
-        } else if (feedback.wokeUp === 'multiple') {
-          tags.push({ label: '多次醒来', type: 'default' })
-        }
+      const isMostUsed = !!mostUsed && mostUsed.scene.id === record.sceneId
+      const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
 
-        if (feedback.soundHarsh === 'no') {
-          tags.push({ label: '声音舒适 ✓', type: 'positive' })
-        } else if (feedback.soundHarsh === 'somewhat') {
-          tags.push({ label: '略有不适', type: 'neutral' })
-        } else if (feedback.soundHarsh === 'yes') {
-          tags.push({ label: '声音刺耳', type: 'default' })
-        }
-
-        const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-        const isLastNight = record.sleepNight === yesterday
-
-        return { record, feedback, tags, isLastNight }
+      return {
+        record,
+        feedback,
+        tags,
+        durationCompare,
+        isMostUsedScene: isMostUsed,
+        mostUsedSceneName: mostUsed?.scene.name || null,
+        isLastNight: record.sleepNight === yesterday
       }
     }
     return null
-  }, [records, getSleepFeedbacks])
-
-  const formatSleepNight = (sleepNight: string) => {
-    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD')
-    if (sleepNight === yesterday) return '昨晚'
-    const twoDaysAgo = dayjs().subtract(2, 'day').format('YYYY-MM-DD')
-    if (sleepNight === twoDaysAgo) return '前天晚上'
-    return dayjs(sleepNight).format('MM月DD日晚')
-  }
+  }, [records, feedbacks, avgDuration, mostUsed])
 
   const handleLastNightClick = useCallback(() => {
-    Taro.navigateTo({
-      url: '/pages/history/index'
-    })
-  }, [])
+    if (!lastNightSummary) return
+    const params = lastNightSummary.record.id
+      ? `?recordId=${lastNightSummary.record.id}`
+      : ''
+    Taro.navigateTo({ url: `/pages/history/index${params}` })
+  }, [lastNightSummary])
 
   return (
     <ScrollView className={styles.homePage} scrollY>
@@ -150,7 +151,7 @@ const HomePage: React.FC = () => {
         <View className={styles.lastNightCard} onClick={handleLastNightClick}>
           <View className={styles.lastNightHeader}>
             <View className={styles.lastNightTitle}>
-              <Text>{formatSleepNight(lastNightSummary.record.sleepNight)}睡眠摘要</Text>
+              <Text>{formatSleepNightLabel(lastNightSummary.record.sleepNight)}睡眠摘要</Text>
               <Text className={styles.lastNightBadge}>已反馈</Text>
             </View>
             <Text className={styles.lastNightArrow}>›</Text>
@@ -158,7 +159,7 @@ const HomePage: React.FC = () => {
           <View className={styles.lastNightContent}>
             <View
               className={styles.lastNightIcon}
-              style={{ backgroundColor: lastNightSummary.record.sceneId ? `${(getSceneById(lastNightSummary.record.sceneId)?.color || '#4a6cf7')}20` : 'rgba(74, 108, 247, 0.2)' }}
+              style={{ backgroundColor: `${(getSceneById(lastNightSummary.record.sceneId)?.color || '#4a6cf7')}20` }}
             >
               <Text>{getSceneById(lastNightSummary.record.sceneId)?.icon || '🌙'}</Text>
             </View>
@@ -181,6 +182,24 @@ const HomePage: React.FC = () => {
               </View>
             </View>
           </View>
+          {(lastNightSummary.durationCompare || lastNightSummary.mostUsedSceneName) && (
+            <View className={styles.lastNightCompare}>
+              {lastNightSummary.durationCompare && (
+                <View className={`${styles.compareItem} ${lastNightSummary.durationCompare.better ? styles.highlight : ''}`}>
+                  <Text className={styles.value}>{lastNightSummary.durationCompare.text}</Text>
+                  <Text className={styles.label}>时长对比</Text>
+                </View>
+              )}
+              {lastNightSummary.mostUsedSceneName && (
+                <View className={`${styles.compareItem} ${lastNightSummary.isMostUsedScene ? styles.highlight : ''}`}>
+                  <Text className={styles.value}>
+                    {lastNightSummary.isMostUsedScene ? '你最常用的场景' : `常用场景是「${lastNightSummary.mostUsedSceneName}」`}
+                  </Text>
+                  <Text className={styles.label}>使用习惯</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       )}
 
@@ -213,7 +232,7 @@ const HomePage: React.FC = () => {
           </View>
           <View className={styles.statItem}>
             <Text className={styles.statValue}>{avgDuration || 0}</Text>
-            <Text className={styles.statLabel}>平均时长</Text>
+            <Text className={styles.statLabel}>平均时长(分)</Text>
           </View>
           <View className={styles.statItem}>
             <Text className={styles.statValue}>{feedbackCount}</Text>
@@ -225,7 +244,7 @@ const HomePage: React.FC = () => {
       <View className={styles.section}>
         <View className={styles.sectionHeader}>
           <Text className={styles.sectionTitle}>选择睡眠场景</Text>
-          <Text className={styles.sectionMore} onClick={handleHistoryClick}>
+          <Text className={styles.sectionMore} onClick={() => Taro.navigateTo({ url: '/pages/history/index' })}>
             历史记录
           </Text>
         </View>

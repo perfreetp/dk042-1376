@@ -218,6 +218,92 @@
   }
 }
 
+.recommendationCompare {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.compareTitle {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: $spacing-sm;
+}
+
+.compareRow {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: stretch;
+}
+
+.compareBlock {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+
+  .label {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+  }
+
+  .sub {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  &.recommended {
+    background: rgba(255, 255, 255, 0.22);
+  }
+}
+
+.recommendedSettings {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.settingsTitle {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: $spacing-sm;
+}
+
+.settingsRow {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.settingItem {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+
+  .label {
+    font-size: $font-size-xs;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .value {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+  }
+}
+
 .recommendationStart {
   margin-top: $spacing-lg;
   height: $button-height-md;
